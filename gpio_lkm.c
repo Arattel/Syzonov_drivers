@@ -528,13 +528,17 @@ static void __exit gpio_lkm_exit(void)
 }
 
 static irq_handler_t gpio_lkm_irq_handler(unsigned int irq, void *dev_id, struct pt_regs *regs){
-   PRESSES_COUNT++;                         // Global counter, will be outputted when the module is unloaded
-   if(PRESSES_COUNT == 10){
+    if(PRESSES_COUNT < 10){
+        PRESSES_COUNT++;
+        printk("Num presses: %d", PRESSES_COUNT);
+    }
+    else if(PRESSES_COUNT == 10){
        refuse_rw = 1;
        gpio_set_value(gpio_led, 1);
-   }
-   printk("Num presses: %d", PRESSES_COUNT);
-   return (irq_handler_t) IRQ_HANDLED;      // Announce that the IRQ has been handled correctly
+        printk("Num presses: %d", PRESSES_COUNT);
+    }
+    printk("Num presses: %d", PRESSES_COUNT);
+    return (irq_handler_t) IRQ_HANDLED;
 }
 /* these are stantard macros to mark
  * init and exit functions implemetations
