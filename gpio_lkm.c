@@ -36,6 +36,7 @@ enum state {low, high};
 int PRESSES_COUNT = 0;
 int refuse_rw = 0;
 int gpioButton =  27;
+int gpio_led =  18;
 static unsigned int irqNumber;          ///< Used to share the IRQ number within this file
 static irq_handler_t gpio_lkm_irq_handler(unsigned int irq, void *dev_id, struct pt_regs *regs);
 
@@ -201,6 +202,9 @@ static int gpio_lkm_release (struct inode *inode, struct file *filp)
 */
 static ssize_t gpio_lkm_read ( struct file *filp, char *buf, size_t count, loff_t *f_pos)
 {
+    if(refuse_rw) {
+        return -1;
+    }
     unsigned int gpio;
     ssize_t retval;
     char byte;
@@ -238,6 +242,9 @@ static ssize_t gpio_lkm_read ( struct file *filp, char *buf, size_t count, loff_
 */
 static ssize_t gpio_lkm_write ( struct file *filp, const char *buf, size_t count, loff_t *f_pos)
 {
+    if(refuse_rw) {
+        return -1;
+    }
     unsigned int gpio, len = 0;
     char kbuf[BUF_SIZE];
     struct gpio_lkm_dev *gpio_lkm_devp = filp->private_data;
@@ -524,8 +531,9 @@ static irq_handler_t gpio_lkm_irq_handler(unsigned int irq, void *dev_id, struct
    PRESSES_COUNT++;                         // Global counter, will be outputted when the module is unloaded
    if(PRESSES_COUNT == 10){
        refuse_rw = 1;
+       gpio_set_value(gpio_led, 1);
    }
-   printk("Perkele: %d", PRESSES_COUNT);
+   printk("Num presses: %d", PRESSES_COUNT);
    return (irq_handler_t) IRQ_HANDLED;      // Announce that the IRQ has been handled correctly
 }
 /* these are stantard macros to mark
